@@ -8,11 +8,6 @@
 
 .is.date <- function(vect) inherits(vect, "POSIXt") || inherits(vect, "Date")
 
-.pretty_name <- function(x) {
-  x = x * 100
-  if (x == floor(x)) sprintf("%.0f%%", x) else sprintf("%.1fxx", x)
-}
-
 describe_numeric_1d <- function(vect, ...) {
   stats <- list(
     mean = mean(vect, na.rm = TRUE),
@@ -33,9 +28,10 @@ describe_numeric_1d <- function(vect, ...) {
   )
   stats$range <- stats$max - stats$min
 
-  for (x in c(0.05, 0.25, 0.75, 0.95)) {
-    stats[[.pretty_name(x)]] <- quantile(vect, x, na.rm = TRUE)
-  }
+  stats <- append(
+    stats,
+    as.list(quantile(vect, c(0.05, 0.25, 0.75, 0.95), na.rm = TRUE))
+  )
 
   stats$iqr <- stats$`75%` - stats$`25%`
   stats$cv <- ifelse(is.finite(stats$mean), stats$std / stats$mean, NA)
