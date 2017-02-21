@@ -106,7 +106,7 @@ describe_1d <- function(vect, ...) {
     is_unique = distinct_count == leng,
     mode = mode,
     p_unique = distinct_count / count,
-    memorysize = format(object.size(vect), units = 'KiB')
+    memorysize = object.size(vect)
   )
 
   if (distinct_count <= 1)
@@ -144,16 +144,18 @@ describe <- function(df, bins=10, correlation_overrides=None) {
     }
   }
 
-  # General statistics
-  table_stats <- new.env()
-  table_stats[['n']] <- nrow(df)
-  table_stats[['nvar']] <- ncol(df)
-  table_stats[['total_missing']] <- length(na.omit(df))
-  table_stats[['n_duplicates']] <- nrow(df[duplicated(df), ])
+  variable_stats <- results
 
-  memsize <- object.size(df)
-  table_stats[['memsize']] <- format(object.size(df), units = 'MiB')
-  table_stats[['recordsize']] <- memsize / table_stats[['n']]
+  # General statistics
+  nr = nrow(df)
+  table_stats <- list(
+    n = nr,
+    nvar = ncol(df),
+    total_missing = length(na.omit(df)),
+    n_duplicates = nrow(df[duplicated(df), ]),
+    memsize = object.size(df),
+    recordsize = object.size(df) / nr
+  )
 
   extra_stats <- as.list(
     table(
@@ -161,16 +163,17 @@ describe <- function(df, bins=10, correlation_overrides=None) {
              levels = c('NUM', 'DATE', 'CONST', 'CAT', 'UNIQUE', 'CORR'))
     )
   )
-
-  for (vals in seq_along(extra_stats)) {
-    table_stats[[names(extra_stats)[vals]]] <- extra_stats[[vals]]
-  }
-
+  table_stats <- append(table_stats, extra_stats)
   table_stats[['REJECTED']] <- sum(extra_stats$CONST, extra_stats$CORR)
 
-  #ldesc_df
-  as.list(table_stats)
-  #results
+  #return {'table': table_stats, 'variables': variable_stats.T, 'freq': {k: df[k].value_counts() for k in df.columns}}
+  list(table = table_stats)
+
+  list(
+    table = table_stats,
+    variables = variable_stats,
+    freq = lapply(df, table)
+  )
 }
 
 to_html <- function(sample, stats_object) {
