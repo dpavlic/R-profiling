@@ -31,16 +31,16 @@ fmtVarname <- function(v)
   sprintf('<code>%s</code>', v)
 
 # FIXME! Using funs???
-value_formatters <- list(
+valueFormatters <- list(
   freq = '(lambda v: gradientFormat(v, 0, 62000, (30, 198, 244), (99, 200, 72)))',
-  p_missing = 'fmtPercent',
-  p_infinite = 'fmtPercent',
-  p_unique = 'fmtPercent',
-  p_zeros = 'fmtPercent',
+  pMissing = 'fmtPercent',
+  pInfinite = 'fmtPercent',
+  pUnique = 'fmtPercent',
+  pZeros = 'fmtPercent',
   memorysize = 'fmtBytesize',
-  total_missing = 'fmtPercent',
+  totalMissing = 'fmtPercent',
   DEFAULT_FLOAT_FORMATTER = 'lambda v = str(float("{:.5g}".format(v))).rstrip("0").rstrip(".")',
-  correlation_var = 'lambda v: fmtVarname(v)'
+  correlationVar = 'lambda v: fmtVarname(v)'
 )
 
 fmtRowSeverity <- function(v) {
@@ -58,9 +58,9 @@ fmtSkewness <- function(v) {
 }
 
 rowFormatters <- list(
-  p_zeros: 'fmtRowSeverity',
-  p_missing: 'fmtRowSeverity',
-  p_infinite: 'fmtRowSeverity',
-  n_duplicates: 'fmtRowSeverity',
+  pZeros: 'fmtRowSeverity',
+  pMissing: 'fmtRowSeverity',
+  pInfinite: 'fmtRowSeverity',
+  nDuplicates: 'fmtRowSeverity',
   skewness: 'fmtSkewness'
 )
