@@ -1,5 +1,5 @@
-SKEWNESS_CUTOFF = 20
-DEFAULT_FLOAT_FORMATTER =
+SKEWNESS_CUTOFF <- 20
+DEFAULT_FLOAT_FORMATTER <-
 
 gradientFormat <- function(value, limit1, limit2, c1, c2) {
   lerpColour <- function(c1, c2, t)
@@ -31,7 +31,7 @@ fmtVarname <- function(v)
   sprintf('<code>%s</code>', v)
 
 # FIXME! Using funs???
-value_formatters = list(
+value_formatters <- list(
   freq = '(lambda v: gradientFormat(v, 0, 62000, (30, 198, 244), (99, 200, 72)))',
   p_missing = 'fmtPercent',
   p_infinite = 'fmtPercent',
@@ -57,7 +57,7 @@ fmtSkewness <- function(v) {
     ''
 }
 
-rowFormatters = list(
+rowFormatters <- list(
   p_zeros: 'fmtRowSeverity',
   p_missing: 'fmtRowSeverity',
   p_infinite: 'fmtRowSeverity',
