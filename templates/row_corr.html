@@ -1,0 +1,13 @@
+{{> rowHeaderIgnore}}
+<div class="col-md-3">
+    <p><em>This variable is highly correlated with {{ values['correlation_var'] }} and should be ignored for analysis</em></p>
+</div>
+<div class="col-md-6">
+    <table class="stats ">
+        <tr>
+            <th>Correlation</th>
+            <td>{{ values['correlation'] }}</td>
+        </tr>
+    </table>
+</div>
+{{> rowFooter}}
