@@ -19,12 +19,12 @@ fmtColor <- function(text, color)
 fmtClass <- function(text, cls)
   sprintf('<span class="%s">%s</span', cls, text)
 
-fmtBytesize <- function(num, suffix = 'B') {
+fmtByteSize <- function(num, suffix = 'B') {
   for (unit in list('', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi')) {
     if (abs(num) < 1024) {
-      sprintf('%3.1f %s%s', num, unit, suffix)
-      num = num / 1024
+      return(sprintf('%3.1f %s%s', num, unit, suffix))
     }
+    num = num / 1024
   }
 }
 
@@ -40,7 +40,7 @@ valueFormatters <- list(
   pInfinite = 'fmtPercent',
   pUnique = 'fmtPercent',
   pZeros = 'fmtPercent',
-  memorysize = 'fmtBytesize',
+  memorysize = 'fmtByteSize',
   totalMissing = 'fmtPercent',
   DEFAULT_FLOAT_FORMATTER = 'DEFAULT_FLOAT_FORMATTER',
   correlationVar = 'fmtVarname'

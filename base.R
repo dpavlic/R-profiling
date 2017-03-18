@@ -229,13 +229,15 @@ describe <- function(df, bins=10, correlationOverrides=None) {
 
   # General statistics
   nr = nrow(df)
+  nvar = ncol(df)
   tableStats <- list(
     n = nr,
-    nvar = ncol(df),
-    totalMissing = length(na.omit(df)),
+    nvar = nvar,
+    totalMissing = Reduce('+', lapply(variableStats, function(x) x$nMissing)) /
+                   (nr * nvar),
     nDuplicates = nrow(df[duplicated(df), ]),
-    memsize = object.size(df),
-    recordsize = object.size(df) / nr
+    memsize = fmtByteSize(object.size(df)),
+    recordsize = fmtByteSize(object.size(df) / nr)
   )
 
   extraStats <- as.list(
