@@ -1,3 +1,71 @@
+.htmlTableVector <- function(vec, tableHeading = NULL, extraClass = '') {
+  if (!is.atomic(vec)) stop('Not a vector')
+  if (extraClass != '')
+    extraClass <- paste0(' ', extraClass)
+  if (!is.null(tableHeading))
+    tableHeading <-  paste0('<th>', tableHeading, '</th>')
+
+  header <- c(
+    sprintf('<table border="1" class="dataframe%s">', extraClass),
+    '<thead>',
+    '<tr style="text-align: right;">',
+    tableHeading,
+    '</tr>',
+    '</thead>',
+    '<tbody>')
+
+  body <- sapply(
+    vec, function(x) paste0('<tr><td>', x, '</tr></td>'), USE.NAMES = FALSE
+  )
+
+  footer <- c(
+    '</tbody>',
+    '</table>'
+  )
+
+  paste(c(header, body, footer), collapse = '\n')
+}
+
+.htmlTableDF <- function(df, extraClass = '') {
+  if (extraClass != '')
+    extraClass <- paste0(' ', extraClass)
+
+  header <- c(
+    '<div class="row variablerow">',
+    '<div class="col-md-12" style="overflow:scroll; width: 100%%; overflow-y: hidden;">',
+    sprintf('<table border="1" class="dataframe%s">', extraClass)
+  )
+
+  tableNames <- c(
+    '<thead>',
+    '<tr style="text-align: right;">',
+    '<th></th>', # Empty th for obs counter
+    sapply(names(df), function(x) paste0('<th>', x, '</th>'), USE.NAMES = FALSE),
+    '</tr>',
+    '</thead>'
+  )
+
+  # The table body
+  tbody <- c(
+    '<tbody>',
+    {
+      crow <- c()
+      for (row in 1:nrow(df)) {
+        crow <- c(crow, c('<tr><th>', row, '</th>',
+                          lapply(df[row, ], function(x) paste0('<td>', x, '</td>')), '</tr>'))
+
+      }
+      paste(crow, collapse = '')
+    },
+    '</tbody>'
+  )
+
+  # End
+  tEnd <- '</table></div></div>'
+
+  paste(c(header, tableNames, tbody, tEnd), collapse = '\n')
+}
+
 .address <- function(x)
   gsub(
     ' ',
@@ -397,23 +465,20 @@ toHtml <- function(sample, statsObject) {
     # FIXMEX2 ----------------------------------------
     if (vObj[[varname]]$type == 'UNIQUE') {
       obs <- fObj[[varname]]
-      lobs <- length(obs)
+      lobs <- nrow(obs)
       if (lobs < 3) obsx <- lobs else obsx <- 3 # FIXME: I think this works
 
+      #browser()
       # FIXME, FORMATTING, columns, classes.
-      formattedValues['firstn'] <- capture.output(xtable::print.xtable(xtable::xtable(
-        obs[1:obsx]), type = 'html' #,
-        #columns ='First 3 values',  FIXME
-        #classes = 'exampleValues'
-      ))
+      formattedValues['firstn'] <-
+        .htmlTableVector(head(obs, n = obsx)[[1]],
+                         tableHeading = sprintf('First %s values', obsx),
+                         extraClass = 'example_values')
 
-      # FIXME, FORMATTING, columns classes.
-      formattedValues['lastn'] <- capture.output(xtable::print.xtable(xtable::xtable(
-        obs[(lobs - obsx):lobs]),
-        type = 'html'
-        #columns = 'Last 3 values',
-        #classes = 'exampleValues'
-      ))
+      formattedValues['lastn'] <-
+        .htmlTableVector(tail(obs, n = obsx)[[1]],
+                         tableHeading = sprintf('Last %s values', obsx),
+                         extraClass = 'example_values')
     }
 
     if (vObj[[varname]]$type %in% c('CORR', 'CONST')) {
