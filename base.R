@@ -87,7 +87,34 @@
 
 .render <- function(...) whisker::whisker.render(...)
 
+.histogram <- function(vect, bins = 10) {
+  histogram <- hist(vect, breaks = bins, plot = FALSE)
+
+  tf <- tempfile('r_prof_fhist_')
+  png(tf, width = 600, height = 400)
+  plot(histogram, col = '#337ab7', xlab = NULL, main = NULL)
+  dev.off()
+  fullHistogram <- paste0('data:image/png;base64,',
+                           base64enc::base64encode(tf))
+  unlink(tf)
+
+  tf <- tempfile('r_prof_fhist_')
+  png(tf, width = 200, height = 75)
+  par(mar = c(0,0,0,0))
+  plot(histogram, col = '#337ab7', xlab = NULL, main = NULL,
+       ylab = NULL, xaxt = 'n', yaxt = 'n', lty = 'blank')
+
+  dev.off()
+  miniHistogram <- paste0('data:image/png;base64,',
+                           base64enc::base64encode(tf))
+  unlink(tf)
+
+  list(fullHistogram = fullHistogram, miniHistogram = miniHistogram)
+}
+
 describeNumeric1d <- function(vect, ...) {
+  hists <- .histogram(vect)
+
   stats <- list(
     mean = mean(vect, na.rm = TRUE),
     std = sd(vect, na.rm = TRUE),
@@ -96,14 +123,14 @@ describeNumeric1d <- function(vect, ...) {
     max = max(vect, na.rm = TRUE),
     kurtosis = moments::kurtosis(vect, na.rm = TRUE) - 3, # Fisher def
     skewness = moments::skewness(vect, na.rm = TRUE),
-    sum = sum(vect, na.rm = TRUE),
     mad = (function(x) {
       x <- na.omit(vect)
       sum(abs(x - mean(x))) / length(x)
     })(vect),
     type = 'NUM',
     nZeros = sum(vect == 0, na.rm = TRUE),
-    histogram = .histogram(vect)
+    histogram = hists$fullHistogram,
+    miniHistogram = hists$miniHistogram
   )
   stats$range <- stats$max - stats$min
 
@@ -119,17 +146,15 @@ describeNumeric1d <- function(vect, ...) {
   stats
 }
 
-.histogram <- function(vect, ...) {
-  h <- hist(vect, ...)
-  list(breaks = h$breaks, counts = h$counts)
-}
-
 describeDate1d <- function(vect) {
+  hists <- .histogram(vect)
+
   stats <- list(
     min = min(vect, na.rm = TRUE),
     max = max(vect, na.rm = TRUE),
     type = 'DATE',
-    histogram <- .histogram(vect)
+    histogram <- hists$fullHistogram,
+    miniHistogram <- hists$miniHistogram
   )
   stats$range <- stats$max - stats$min
 
@@ -160,6 +185,7 @@ describeUnique1d <- function(vect) {
 describe1d <- function(vect, ...) {
   leng <- length(vect)
   count <- length(na.omit(vect))
+
   # This is a departure from pandas code, but not specifying numeric structure
   # massively slows the program down while devouring memory.
   if (is.numeric(vect) | .is.date(vect))
