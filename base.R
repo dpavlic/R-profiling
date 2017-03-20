@@ -1,5 +1,10 @@
 .address <- function(x)
-  substring(capture.output(.Internal(inspect(x)))[1],2,17)
+  gsub(
+    ' ',
+    '-',
+    substring(capture.output(.Internal(inspect(x)))[1],2,17),
+    fixed = TRUE
+  )
 
 .mode <- function(x) {
   ux <- unique(na.omit(x))
@@ -173,11 +178,16 @@ describe <- function(df, bins=10, correlationOverrides=None) {
   tableStats <- append(tableStats, extraStats)
   tableStats[['REJECTED']] <- sum(extraStats$CONST, extraStats$CORR)
 
-  list(
-    table = tableStats,
-    variables = variableStats,
-    freq = lapply(df, table)
+  tableFreq <- lapply(
+    names(df),
+    function(x) {
+      tmpdf <- plyr::count(df, x)
+      na.omit(tmpdf[order(-tmpdf$freq), ])
+    }
   )
+  names(tableFreq) <- names(df)
+
+  list(table = tableStats, variables = variableStats, freq = tableFreq)
 }
 
 toHtml <- function(sample, statsObject) {
@@ -190,7 +200,7 @@ toHtml <- function(sample, statsObject) {
 #  -------
 #  str, containing profile report in HTML format
 
-  nObs = stats_object$table$n
+  nObs <- statsObject$table$n
 
   didYou <- 'Did you generate this using the R-profiling describe() function?'
   if (!is.data.frame(sample)) stop('Sample must be a data frame.')
@@ -200,7 +210,11 @@ toHtml <- function(sample, statsObject) {
     stop(paste('statsObject badly formatted.', didYou))
 
   fmt <- function(value, name) {
-    if (is.na(value)) ''
+    # NOTE: Any really serves really no point here except to shut down warning
+    #       messages.
+    # FIXME: This is NOT quite right because we need to pass HISTOGRAMS
+    #        properly.
+    if (any(is.na(value))) return(NULL)
     if (name %in% valueFormatters)
       get(valueFormatters[[name]])(value)
     else if (is.numeric(value))  # Is this correct from float?
@@ -210,25 +224,25 @@ toHtml <- function(sample, statsObject) {
   }
 
   .formatRow <- function(
-    freq, label, maxFreq, rowTemplate, n, extraClass = ''
+    freq, label, maxFreq, rowTemplate, n, extraClass = NULL
   ) {
-    width <- int(freq / maxFreq * 99) + 1
+    width <- as.integer(freq / maxFreq * 99) + 1
 
     if (width > 20) {
       labelInBar <- freq
-      labelAfterBar <- ''
+      labelAfterBar <- NULL
     } else {
       labelInBar <- '&nbsp;'
       labelAfterBar <- freq
     }
 
     .render(
-      rowTemplate,
+      paste(rowTemplate, collapse = '\n'),
       list(
         label = label,
         width = width,
         count = freq,
-        percentage = sprintf('%2.1f%%', freq / n * 100),
+        percentage = sprintf('%2.1f', freq / n * 100), # FIXME PCT------------
         extraClass = extraClass,
         labelInBar = labelInBar,
         labelAfterBar = labelAfterBar
@@ -237,37 +251,35 @@ toHtml <- function(sample, statsObject) {
   }
 
   freqTable <- function(
-    freqtable, n, tableTemplate, rowTemplate, maxNumberToPrint
+    freqTable, n, tableTemplate, rowTemplate, maxNumberToPrint
   ) {
-    freqRowsHtml <- ''
-    if (maxNumberToPrint > n) maxNumberToPrint <- n
-    if (maxNumberToPrint < length(freqtable)) {
-      freqOther <- sum(freqtable[1:maxNumberToPrint])
-      minFreq <- freqtable[[maxNumberToPrint]]
+    freqRowsHtml <- NULL
+
+    tableLength <- nrow(freqTable)
+    if (maxNumberToPrint > tableLength) maxNumberToPrint <- tableLength
+    if (maxNumberToPrint < tableLength) {
+      freqOther <- sum(freqTable$freq[1:maxNumberToPrint])
+      minFreq <- freqTable$freq[[maxNumberToPrint]]
     } else {
       freqOther <- 0
       minFreq <- 0
     }
 
-    freqMissing <- n - sum(freqtable)
-    maxFreq <- max(freqtable[[0]], freqOther, freqMissing)
+    freqMissing <- n - sum(freqTable$freq)
+    maxFreq <- max(freqTable$freq[1], freqOther, freqMissing)
 
-    for (row in seq_along(freqtable[1:maxNumberToPrint])) {
-      .label <- names(freqtable)[row]
-      .freq <- freqtable[[row]]
-
+    for (r in 1:maxNumberToPrint)
       freqRowsHtml <- append(
         freqRowsHtml,
-        .formatRow(.freq, .label, maxFreq, rowTemplate, n)
+        .formatRow(freqTable[r, 2], freqTable[r, 1], maxFreq, rowTemplate, n)
       )
-    }
 
     if (freqOther > minFreq)
       freqRowsHtml <- append(
         freqRowsHtml,
         .formatRow(
           freqOther,
-          sprintf('Other values (%s)', length(freqtable) - maxNumberToPrint),
+          sprintf('Other values (%s)', nrow(freqTable) - maxNumberToPrint),
           maxFreq,
           rowTemplate,
           n,
@@ -289,38 +301,46 @@ toHtml <- function(sample, statsObject) {
       )
 
     .render(
-      tableTemplate,
-      list(rows = freqRowsHtml, varid = .address(vObj$varname))
+      paste(tableTemplate, collapse = '\n'),
+      list(rows = paste(freqRowsHtml, collapse = '\n'), varid = .address(vObj[[varname]]))
     )
   }
 
   extremeObsTable <- function(
-    freqtable, tableTemplate, rowTemplate, numberToPrint, n, ascending = TRUE
+    freqTable, tableTemplate, rowTemplate, numberToPrint, n, ascending = TRUE
   ) {
+    if (nrow(freqTable) < numberToPrint) numberToPrint <- nrow(freqTable)
     if (ascending)
-      obsToPrint <- sort(freqtable)[1:numberToPrint]
-    else
-      obsToPrint = sort(freqtable, decreasing = TRUE)[numberToPrint:1]
-
-    freqRowsHtml <- ''
-    maxFreq <- max(obsToPrint)
-
-    for (row in seq_along(freqtable[1:obsToPrint])) {
-      .label <- names(freqtable)[row]
-      .freq <- freqtable[[row]]
-
-      freqRowsHtml <- append(
-        freqRowsHtml,
-        .formatRow(.freq, .label, maxFreq, rowTemplate, n)
-      )
+      obsToPrint <- freqTable[order(freqTable[[1]]), ][1:numberToPrint, ]
+    else {
+      obsToPrint <- freqTable[order(freqTable[[1]],
+                                    decreasing = TRUE), ][numberToPrint:1, ]
     }
 
-    .render(tableTemplate, list(rows = freqRowsHtml))
+    freqRowsHtml <- NULL
+    maxFreq <- max(obsToPrint$freq)
+
+    for (r in 1:nrow(obsToPrint))
+      freqRowsHtml <- append(
+        freqRowsHtml,
+        .formatRow(obsToPrint[r, 2], obsToPrint[r, 1], maxFreq, rowTemplate, n)
+      )
+
+#    for (row in seq_along(obsToPrint[1:length(obsToPrint)])) {
+#      .label <- names(obsToPrint)[row]
+#      .freq <- obsToPrint[[row]]
+#
+#      freqRowsHtml <- append(
+#        freqRowsHtml,
+#        .formatRow(.freq, .label, maxFreq, rowTemplate, n)
+#      )
+#    }
+    .render(paste(tableTemplate, '\n'), list(rows = paste(freqRowsHtml, collapse = '\n')))
   }
 
   # Variables
-  rowsHtml <- ''
-  messages <- ''
+  rowsHtml <- NULL
+  messages <- NULL
 
   vObj <- statsObject$variables
   fObj <- statsObject$freq
@@ -329,90 +349,100 @@ toHtml <- function(sample, statsObject) {
   for (varname in names(vObj)) {
     formattedValues <- list(
       varname = varname,
-      varid = .address(vObj$varname)
+      varid = .address(vObj[[varname]])
     )
     rowClasses <- list()
 
-    for (stat in names(vObj$varname))
-      formattedValues[stat] <- fmt(vObj$varname$stat, stat)
+    for (stat in names(vObj[[varname]]))
+      formattedValues[stat] <- fmt(vObj[[varname]][[stat]], stat)
 
-    for (col in intersect(names(vObj$varname), names(rowFormatters))) {
-      rowClasses[col] <- get(rowFormatters[[col]])(vObj$varname[[col]])
+    for (col in intersect(names(vObj[[varname]]), names(rowFormatters))) {
+      rowClasses[col] <- get(rowFormatters[[col]])(vObj[[varname]][[col]])
       if (rowClasses[[col]] == 'alert' & col %in% names(templateMessages))
-        append(
+        messages <- append(
           messages,
           .render(
-            templateMessages[[col]]),
-            append(formattedValues, list(varname = fmtVarname(varname)))
+            paste(templateMessages[[col]], collapse = '\n'),
+            append(formattedValues[names(formattedValues) != 'varname'],
+                   list(varname = fmtVarname(varname)))
+          )
         )
     }
 
-    if (vObj$varname$type == 'CAT')
-      formattedValues['minifreqtable'] <- freqTable(
+    if (vObj[[varname]]$type == 'CAT') {
+      formattedValues['miniFreqTable'] <- freqTable(
         fObj[[varname]],
         nObs,
-        templates.template('miniFreqTable'),
-        templates.template('miniFreqTableRow'),
+        template('miniFreqTable'),
+        template('miniFreqTableRow'),
         3
       )
 
-      if (vObj$varname$distinctCount > 50) {
+      if (vObj[[varname]]$distinctCount > 50) {
         # FIXME
-        append(
+        messages <- append(
           messages,
           .render(
-            templateMessages$HIGH_CARDINALITY,
-            list(varname = varname,  distCount = vObj$varname$distinctCount)
+            paste(templateMessages$HIGH_CARDINALITY, collapse = '\n'),
+            list(varname = fmtVarname(varname),
+                 distCount = vObj[[varname]]$distinctCount)
           )
         )
-        rowClasses['distinctCount'] <- alert
+        rowClasses['distinctCount'] <- 'alert'
       } else {
-        rowClasses['distinctCount'] <- ''
+        rowClasses['distinctCount'] <- NULL
       }
-
-    if (vObj$varname$type == 'UNIQUE') {
-      obs <- fObj$varname
-      lobs <- length(fObj$varname)
-
-      # FIXME
-      formattedValues['firstn'] <- to_html(
-        obs[1:3],
-        columns ='First 3 values',
-        classes = 'exampleValues'
-      )
-      # FIXME
-      formattedValues['lastn'] <- to_html(
-        obs[(lobs - 3):lobs],
-        columns = 'Last 3 values',
-        claases = 'exampleValues'
-      )
     }
 
-    if (vObj$varname$type %in% c('CORR', 'CONST')) {
-      formattedValues['varname'] <- formatters.fmt_varname(varname)
+    # FIXMEX2 ----------------------------------------
+    if (vObj[[varname]]$type == 'UNIQUE') {
+      obs <- fObj[[varname]]
+      lobs <- length(obs)
+      if (lobs < 3) obsx <- lobs else obsx <- 3 # FIXME: I think this works
+
+      # FIXME, FORMATTING, columns, classes.
+      formattedValues['firstn'] <- capture.output(xtable::print.xtable(xtable::xtable(
+        obs[1:obsx]), type = 'html' #,
+        #columns ='First 3 values',  FIXME
+        #classes = 'exampleValues'
+      ))
+
+      # FIXME, FORMATTING, columns classes.
+      formattedValues['lastn'] <- capture.output(xtable::print.xtable(xtable::xtable(
+        obs[(lobs - obsx):lobs]),
+        type = 'html'
+        #columns = 'Last 3 values',
+        #classes = 'exampleValues'
+      ))
+    }
+
+    if (vObj[[varname]]$type %in% c('CORR', 'CONST')) {
+      formattedValues['varname'] <- fmtVarname(varname)
       # FIXME
-      append(
+      messages <- append(
         messages,
-        .render(templateMessages[[vObj$varname$type]], formattedValues)
+        .render(paste(templateMessages[[vObj[[varname]]$type]], collapse = '\n'),
+                append(formattedValues, list(varname = fmtVarname(varname))))
       )
     } else {
-      formattedValues['freqtable'] <- freqTable(
-        fObj$varname,
+      formattedValues['freqTable'] <- freqTable(
+        fObj[[varname]],
         nObs,
         template('freqTable'),
         template('freqTableRow'),
         10
       )
+      # FIXME DEBUG
       formattedValues['firstnExpanded'] <- extremeObsTable(
-        fObj$varname,
+        fObj[[varname]],
         template('freqTable'),
         template('freqTableRow'),
         5,
         nObs,
         ascending = TRUE
       )
-      formattedValues['lastNExpanded'] <- extremeObsTable(
-        fObj$varname,
+      formattedValues['lastnExpanded'] <- extremeObsTable(
+        fObj[[varname]],
         template('freqTable'),
         template('freqTableRow'),
         5,
@@ -420,51 +450,67 @@ toHtml <- function(sample, statsObject) {
         ascending = FALSE
       )
     }
-
     rowsHtml <- append(
       rowsHtml,
-      .render(rowTemplatesDict[[vObj$type]],
-              list(values = formattedValues, rowClasses = rowClasses))
+      .render(
+        paste(rowTemplatesDict[[vObj[[varname]]$type]], collapse = '\n'),
+        list(values = formattedValues, classes = rowClasses),
+        partials = list(
+          rowHeaderIgnore = template('.rowHeaderIgnore'),
+          rowHeader = template('.rowHeader'),
+          rowFooter = template('.rowFooter'),
+          varType = varType[[vObj[[varname]]$type]]
+        )
+      )
     )
   }
 
   # Overview
-  # FIXME
-  #formatted_values = {k: fmt(v, k) for k, v in six.iteritems(stats_object['table'])}
-
+  formattedValues <- mapply(function(k, v) fmt(k, v), tObj, names(tObj))
   rowClasses <- list()
 
   # FIXME
-  #for col in six.viewkeys(stats_object['table']) & six.viewkeys(row_formatters):
-  #  row_classes[col] = row_formatters[col](stats_object['table'][col])
-  #if row_classes[col] == "alert" and col in templates.messages:
-  #  messages.append(templates.messages[col].format(formatted_values, varname = formatters.fmt_varname(idx)))
+  # TODO: Check to make sure this is an accurate PY conversion.
+  for (col in intersect(names(tObj), names(rowFormatters))) {
+    rowClasses[col] <- get(rowFormatters[[col]])(tObj[[col]])
+  }
+  for (col in intersect(names(tObj[[varname]]), names(rowFormatters))) {
+    rowClasses[col] <- get(rowFormatters[[col]])(tObj[[varname]][[col]])
+    if (rowClasses[[col]] == 'alert' & col %in% names(templateMessages))
+      messages <- append(
+        messages,
+        .render(
+          paste(templateMessages[[col]], collapse = '\n'),
+          append(formattedValues, list(varname = fmtVarname(varname)))
+        )
+      )
+  }
 
-  messagesHtml <- ''
+  messagesHtml <- NULL
   for (msg in messages) {
     messagesHtml <- append(
       messagesHtml,
-      .render(templateMessageRow, list(message = msg))
+      .render(paste(templateMessageRow, collapse = '\n'), list(message = msg))
     )
   }
 
-  overviewHtml <- .render(template('overview'), list(
+  overviewHtml <- .render(paste(template('overview'), collapse = '\n'), list(
     values = formattedValues,
     rowClasses = rowClasses,
-    messages = messagesHtml
+    messages = paste(messagesHtml, collapse = '\n')
   ))
 
-  # Sample
-  # FIXME
-  #sample_html = templates.template('sample').render(sample_table_html=sample.to_html(classes="sample"))
+  # Sample FIXME FIXME FIXME
+  #sampleHtml = .render(paste(template('sample'), collapse = '\n'),
+  #                     list(sampleTableHtml = capture.output(xtable::print.xtable(xtable::xtable(sample)))))
+  # TEMP
+  sampleHtml <- 'place'
 
   # TODO: should be done in the template
   .render(
-    template('base'),
-    list(overviewHtml = overviewHtml,
-         rowsHtml = rowsHtml,
-         sampleHtml = sampleHtml)
+    paste(template('base'), collapse = '\n'),
+    list(overviewHtml = paste(overviewHtml, collapse = '\n'),
+         rowsHtml = paste(rowsHtml, collapse = '\n'),
+         sampleHtml = paste(sampleHtml, collapse = '\n'))
   )
 }
-
-a <- read.csv("~/projects/Meteorite_Landings.csv")

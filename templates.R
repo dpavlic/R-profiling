@@ -1,5 +1,5 @@
 # Mapping between template name and file
-templates = list(
+templates <- list(
   freqTableRow = 'freq_table_row.html',
   miniFreqTableRow = 'mini_freq_table_row.html',
   freqTable = 'freq_table.html',
@@ -13,11 +13,14 @@ templates = list(
   overview = 'overview.html',
   sample = 'sample.html',
   base = 'base.html',
-  wrapper = 'wrapper.html'
+  wrapper = 'wrapper.html',
+  .rowHeaderIgnore = '_row_header_ignore.html',
+  .rowHeader = '_row_header.html',
+  .rowFooter = '_row_footer.html'
 )
 
 # Mapping between row type and var type
-varType = list(
+varType <- list(
   NUM = 'Numeric',
   DATE = 'Date',
   CAT = 'Categorical',
@@ -30,7 +33,7 @@ template <- function(templateName)
   readLines(sprintf('templates/%s', templates[[templateName]]), warn = FALSE)
 
 # mapping between row type and template name
-rowTemplatesDict = list(
+rowTemplatesDict <- list(
   NUM = template('rowNum'),
   DATE = template('rowDate'),
   DISCRETE = template('rowNum'),
@@ -40,15 +43,15 @@ rowTemplatesDict = list(
   CORR = template('rowCorr')
 )
 
-templateMessages = list(
-  CONST = '{0[varname]} has constant value {0[mode]} <span class="label label-primary">Rejected</span>',
-  CORR = '{0[varname]} is highly correlated with {0[correlation_var]} (ρ = {0[correlation]}) <span class="label label-primary">Rejected</span>',
-  HIGH_CARDINALITY = '{{varname}} has a high cardinality: {{distCount}} distinct values  <span class="label label-warning">Warning</span>',
-  nDuplicates = 'Dataset has {0[n_duplicates]} duplicate rows <span class="label label-warning">Warning</span>',
-  skewness = '{varname} is highly skewed (γ1 = {0[skewness]})',
-  pMissing = '{varname} has {0[n_missing]} / {0[p_missing]} missing values <span class="label label-default">Missing</span>',
-  pInfinite = '{varname} has {0[n_infinite]} / {0[p_infinite]} infinite values <span class="label label-default">Infinite</span>',
-  pZeros = '{varname} has {0[n_zeros]} / {0[p_zeros]} zeros'
+templateMessages <- list(
+  CONST = '{{{varname}}} has constant value {{mode}} <span class="label label-primary">Rejected</span>',
+  CORR = '{{{varname}}} is highly correlated with {{correlationVar}} (ρ = {{correlation}}) <span class="label label-primary">Rejected</span>',
+  HIGH_CARDINALITY = '{{{varname}}} has a high cardinality: {{distCount}} distinct values  <span class="label label-warning">Warning</span>',
+  nDuplicates = 'Dataset has {{nDuplicates}} duplicate rows <span class="label label-warning">Warning</span>',
+  skewness = '{{{varname}}} is highly skewed (γ1 = {{skewness}})',
+  pMissing = '{{{varname}}} has {{nMissing}} / {{pMissing}} missing values <span class="label label-default">Missing</span>',
+  pInfinite = '{{{varname}}} has {{nInfinite}} / {{pInfinite}} infinite values <span class="label label-default">Infinite</span>',
+  pZeros = '{{{varname}}} has {{nZeros}} / {{pZeros}} zeros'
 )
 
-templateMessageRow = '<li>{{message}}</l>'
+templateMessageRow <- '<li>{{{message}}}</l>'
