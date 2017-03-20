@@ -66,6 +66,7 @@
   paste(c(header, tableNames, tbody, tEnd), collapse = '\n')
 }
 
+
 .address <- function(x)
   gsub(
     ' ',
@@ -283,7 +284,7 @@ toHtml <- function(sample, statsObject) {
     # FIXME: This is NOT quite right because we need to pass HISTOGRAMS
     #        properly.
     if (any(is.na(value))) return(NULL)
-    if (name %in% valueFormatters)
+    if (name %in% names(valueFormatters))
       get(valueFormatters[[name]])(value)
     else if (is.numeric(value))  # Is this correct from float?
       get(valueFormatters$DEFAULT_FLOAT_FORMATTER)(value)
@@ -468,7 +469,6 @@ toHtml <- function(sample, statsObject) {
       lobs <- nrow(obs)
       if (lobs < 3) obsx <- lobs else obsx <- 3 # FIXME: I think this works
 
-      #browser()
       # FIXME, FORMATTING, columns, classes.
       formattedValues['firstn'] <-
         .htmlTableVector(head(obs, n = obsx)[[1]],
@@ -535,7 +535,7 @@ toHtml <- function(sample, statsObject) {
   rowClasses <- list()
 
   # FIXME
-  # TODO: Check to make sure this is an accurate PY conversion.
+  # TODO: Check to make sure th/s is an accurate PY conversion.
   for (col in intersect(names(tObj), names(rowFormatters))) {
     rowClasses[col] <- get(rowFormatters[[col]])(tObj[[col]])
   }
@@ -569,7 +569,7 @@ toHtml <- function(sample, statsObject) {
   #sampleHtml = .render(paste(template('sample'), collapse = '\n'),
   #                     list(sampleTableHtml = capture.output(xtable::print.xtable(xtable::xtable(sample)))))
   # TEMP
-  sampleHtml <- 'place'
+  sampleHtml <- .htmlTableDF(sample, extraClass = 'sample')
 
   # TODO: should be done in the template
   .render(
