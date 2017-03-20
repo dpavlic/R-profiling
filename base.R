@@ -136,7 +136,7 @@ describeNumeric1d <- function(vect, ...) {
 
   stats <- append(
     stats,
-    as.list(quantile(vect, c(0.05, 0.25, 0.75, 0.95), na.rm = TRUE))
+    as.list(quantile(vect, c(0.05, 0.25, 0.50, 0.75, 0.95), na.rm = TRUE))
   )
 
   stats$iqr <- stats$`75%` - stats$`25%`
