@@ -443,7 +443,7 @@ toHtml <- function(sample, statsObject) {
   fObj <- statsObject$freq
   tObj <- statsObject$table
 
-  for (varname in names(vObj)) {
+  for (varname in sort(names(vObj))) {
     formattedValues <- list(
       varname = varname,
       varid = .address(vObj[[varname]])
