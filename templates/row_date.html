@@ -5,27 +5,27 @@
             <table class="stats ">
                 <tr>
                     <th>Distinct count</th>
-                    <td>{{ values['distinct_count'] }}</td>
+                    <td>{{#values}}{{distinctCount}}{{/values}}</td>
                 </tr>
                 <tr>
                     <th>Unique (%)</th>
-                    <td>{{ values['p_unique'] }}</td>
+                    <td>{{#values}}{{pUnique}}{{/values}}</td>
                 </tr>
-                <tr class="{{ row_classes['p_missing'] }}">
+                <tr class="{{#classes}}{{pMissing}}{{/classes}}">
                     <th>Missing (%)</th>
-                    <td>{{ values['p_missing'] }}</td>
+                    <td>{{#values}}{{pMissing}}{{/values}}</td>
                 </tr>
-                <tr class="{{ row_classes['p_missing'] }}">
+                <tr class="{{#classes}}{{pMissing}}{{/classes}}">
                     <th>Missing (n)</th>
-                    <td>{{ values['n_missing'] }}</td>
+                    <td>{{#values}}{{nMissing}}{{/values}}</td>
                 </tr>
-                <tr class="{{ row_classes['p_infinite'] }}">
+                <tr class="{{#classes}}{{pInfinite}}{{/classes}}">
                     <th>Infinite (%)</th>
-                    <td>{{ values['p_infinite'] }}</td>
+                    <td>{{#values}}{{pInfinite}}{{/values}}</td>
                 </tr>
-                <tr class="{{ row_classes['p_infinite'] }}">
+                <tr class="{{#classes}}{{pInfinite}}{{/classes}}">
                     <th>Infinite (n)</th>
-                    <td>{{ values['n_infinite'] }}</td>
+                    <td>{{#values}}{{nInfinite}}{{/values}}</td>
                 </tr>
             </table>
         </div>
@@ -33,26 +33,26 @@
             <table class="stats ">
                 <tr>
                     <th>Minimum</th>
-                    <td>{{ values['min'] }}</td>
+                    <td>{{#values}}{{min}}{{/values}}</td>
                 </tr>
                 <tr>
                     <th>Maximum</th>
-                    <td>{{ values['max'] }}</td>
+                    <td>{{#values}}{{max}}{{/values}}</td>
                 </tr>
             </table>
         </div>
     </div>
 </div>
-<div class="col-md-3 collapse in" id="minihistogram{{ values['varid'] }}">
-    <img src="{{ values['mini_histogram'] }}">
+<div class="col-md-3 collapse in" id="minihistogram{{#values}}{{varid}}{{/values}}">
+    <img src="{{#values}}{{miniHistogram}}{{/values}}">
 </div>
 <div class="col-md-12 text-right">
-    <a role="button" data-toggle="collapse" data-target="#descriptives{{ values['varid'] }},#minihistogram{{ values['varid'] }}"
+  <a role="button" data-toggle="collapse" data-target="#descriptives{{#values}}{{varid}}{{/values}},#minihistogram{{#values}}{{varid}}{{/values}}"
        aria-expanded="false" aria-controls="collapseExample">
         Toggle details
     </a>
 </div>
-<div class="row collapse col-md-12" id="descriptives{{ values['varid'] }}">
-    <img src="{{ values['histogram'] }}">
+<div class="row collapse col-md-12" id="descriptives{{#values}}{{varid}}{{/values}}">
+    <img src="{{#values}}{{histogram}}{{/values}}">
 </div>
 {{> rowFooter}}

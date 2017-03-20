@@ -1,6 +1,6 @@
 <div class="row variablerow ignore">
     <div class="col-md-3 namecol">
-        <p class="h4"><s>{{ values['varname'] }}</s><br/>
-            <small>{{ vartype }}</small>
+        <p class="h4"><s>{{#values}}{{varname}}{{/values}}</s><br/>
+        <small>{{> varType}}</small>
         </p>
     </div>

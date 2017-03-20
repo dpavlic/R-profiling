@@ -5,23 +5,23 @@
             <tbody>
             <tr>
                 <th>Number of variables</th>
-                <td>{{ values['nvar'] }} </td>
+                <td>{{#values}}{{nvar}}{{/values}} </td>
             </tr>
             <tr>
                 <th>Number of observations</th>
-                <td>{{ values['n'] }} </td>
+                <td>{{#values}}{{n}}{{/values}} </td>
             </tr>
             <tr>
                 <th>Total Missing (%)</th>
-                <td>{{ values['total_missing'] }} </td>
+                <td>{{#values}}{{totalMissing}}{{/values}} </td>
             </tr>
             <tr>
                 <th>Total size in memory</th>
-                <td>{{ values['memsize'] }} </td>
+                <td>{{#values}}{{memsize}}{{/values}} </td>
             </tr>
             <tr>
                 <th>Average record size in memory</th>
-                <td>{{ values['recordsize'] }} </td>
+                <td>{{#values}}{{recordsize}}{{/values}} </td>
             </tr>
             </tbody>
         </table>
@@ -32,29 +32,29 @@
             <tbody>
             <tr>
                 <th>Numeric</th>
-                <td>{{ values['NUM'] }} </td>
+                <td>{{#values}}{{NUM}}{{/values}} </td>
             </tr>
             <tr>
                 <th>Categorical</th>
-                <td>{{ values['CAT'] }} </td>
+                <td>{{#values}}{{CAT}}{{/values}} </td>
             </tr>
             <tr>
                 <th>Date</th>
-                <td>{{ values['DATE'] }} </td>
+                <td>{{#values}}{{DATE}}{{/values}} </td>
             </tr>
             <tr>
                 <th>Text (Unique)</th>
-                <td>{{ values['UNIQUE'] }} </td>
+                <td>{{#values}}{{UNIQUE}}{{/values}} </td>
             </tr>
             <tr>
                 <th>Rejected</th>
-                <td>{{ values['REJECTED'] }} </td>
+                <td>{{#values}}{{REJECTED}}{{/values}} </td>
             </tr>
             </tbody>
         </table>
     </div>
     <div class="col-md-12" style="padding-left: 1em;">
         <p class="h4">Warnings</p>
-        <ul class="list-unstyled">{{ messages }} </ul>
+        <ul class="list-unstyled">{{{messages}}} </ul>
     </div>
 </div>

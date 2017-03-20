@@ -1,32 +1,32 @@
 {{> rowHeader}}
 <div class="col-md-3">
     <table class="stats ">
-        <tr class="{{ row_classes['distinct_count'] }}">
+        <tr class="{{#classes}}{{distinctCount}}{{/classes}}">
             <th>Distinct count</th>
-            <td>{{ values['distinct_count'] }}</td>
+            <td>{{#values}}{{distinctCount}}{{/values}}</td>
         </tr>
         <tr>
             <th>Unique (%)</th>
-            <td>{{ values['p_unique'] }}</td>
+            <td>{{#values}}{{pUnique}}{{/values}}</td>
         </tr>
-        <tr class="{{ row_classes['p_missing'] }}">
+        <tr class="{{#classes}}{{pMissing}}{{/classes}}">
             <th>Missing (%)</th>
-            <td>{{ values['p_missing'] }}</td>
+            <td>{{#values}}{{pMissing}}{{/values}}</td>
         </tr>
-        <tr class="{{ row_classes['p_missing'] }}">
+        <tr class="{{#classes}}{{pMissing}}{{/classes}}">
             <th>Missing (n)</th>
-            <td>{{ values['n_missing'] }}</td>
+            <td>{{#values}}{{nMissing}}{{/values}}</td>
         </tr>
     </table>
 </div>
-{{ values['minifreqtable'] }}
+{{#values}}{{{miniFreqTable}}}{{/values}}
 <div class="col-md-12 text-right">
-    <a role="button" data-toggle="collapse" data-target="#freqtable{{ values['varid'] }}, #minifreqtable{{ values['varid'] }}"
+  <a role="button" data-toggle="collapse" data-target="#freqtable{{#values}}{{varid}}{{/values}}, #minifreqtable{{#values}}{{varid}}{{/values}}"
        aria-expanded="true" aria-controls="collapseExample">
         Toggle details
     </a>
 </div>
-<div class="col-md-12 extrapadding collapse" id="freqtable{{ values['varid']  }}">
-    {{ values['freqtable'] }}
+<div class="col-md-12 extrapadding collapse" id="freqtable{{#values}}{{varid}}{{/values}}">
+    {{#values}}{{{freqTable}}}{{/values}}
 </div>
 {{> rowFooter}}
